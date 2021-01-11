@@ -1,2 +1,2 @@
-# arduinoSerialPloter
+# ArduinoSerialPlotter
 Serial plotter written in python.
