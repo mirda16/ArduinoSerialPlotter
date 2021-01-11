@@ -1,25 +1,15 @@
 import os
 import sys
-import time
 import serial
 import serial.tools.list_ports
-
-import re
-
 import PySimpleGUI as sg
-
 import matplotlib
 import matplotlib.backends.backend_tkagg as tkagg
 import tkinter as Tk
-
-from random import randint
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-from matplotlib.colors import BoundaryNorm
-from matplotlib.ticker import MaxNLocator
 import numpy as np
-import time
 from matplotlib.ticker import NullFormatter
 matplotlib.use('TkAgg')
 
