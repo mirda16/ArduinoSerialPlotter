@@ -13,29 +13,31 @@ import numpy as np
 from matplotlib.ticker import NullFormatter
 matplotlib.use('TkAgg')
 
-rates = [50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200]
+rates = [50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200]  # available baud rates
 
+# seatchPorts creates list of available COM ports
 def searchPorts():
     ports = serial.tools.list_ports.comports(include_links=False)
     return ports
 
+# setSerial opens chosed COM port
 def setSerial(comPort,bspeed):
     try:
         ser = serial.Serial(comPort, bspeed)
         return ser
     except:
-        print("Serial nejde precist") 
+        print("Serial port opening error.") 
     
-
+# getData gets data from open COM port. The data must be eneded by new line mark
 def getData(ser):
     try:
-        data = ser.readline()  # TODO: data must be send like println
+        data = ser.readline()  # TODO: data must be send like println (ended by NL or CR?)
     except:
-        print("Nemam data")
+        print("Bad data or timeout.")
     return data
 
 
-porty = searchPorts()
+ports = searchPorts()  # list of connected ports
 
 fig = plt.gcf()      # if using Pyplot then get the figure from the plot
 figure_x, figure_y, figure_w, figure_h = fig.bbox.bounds
@@ -48,26 +50,25 @@ def draw_figure(canvas, figure):
     figure_canvas_agg._idle
     return figure_canvas_agg
 
+# pySimpleGUI window layout
 layout = [[sg.Text('COM port:'), sg.Text('', key='_seat_', size = (10, None))],
-         [sg.Combo(porty,default_value = porty[-1]), sg.Text("Baud Rate: "), sg.Combo(rates, default_value=rates[12]), sg.Button('Read')],
+         [sg.Combo(ports,default_value = ports[-1]), sg.Text("Baud Rate: "), sg.Combo(rates, default_value=rates[12]), sg.Button('Read')],
          [sg.Canvas(size=(figure_w, figure_h), key='-CANVAS-')],
          [sg.Text('Last data: '), sg.Text('',key = '_data_', size = (20, None))],
          [sg.Button('Exit')]]
 window = sg.Window('Arduino serial plotter', layout, finalize=True)
 
+# canvas element for ploting
 canvas_elem = window['-CANVAS-']
 canvas = canvas_elem.TKCanvas
 
-fig, ax = plt.subplots()
-ax.grid(False)
-fig, ax = plt.subplots(figsize=(5, 5))
-
+fig, ax = plt.subplots()  # subplot figure definition
+ax.grid(False)  # disabling grid
+#fig, ax = plt.subplots(figsize=(5, 5))
 fig_agg = draw_figure(canvas, fig)
 
 i = 0
-kplotu = 0
 arr2 = np.array([0])
-a = 1
 
 while True:  # Event Loop
     event, values = window.Read(timeout=10)
@@ -83,12 +84,11 @@ while True:  # Event Loop
             temp = {'_IN_': decoded_bytes}
             window.FindElement('_data_').Update(temp['_IN_'])
 
-            arr2 = np.append(arr2, np.array(int(decoded_bytes)))
+            arr2 = np.append(arr2, np.array(float(decoded_bytes)))
             i = i+1
+            # show last 200 values in graph
             if i > 200:
-                #    i = 0
                 arr2 = arr2[-200:]
-            a=a+1
 
             # plot all data
             ax.clear()
@@ -96,9 +96,8 @@ while True:  # Event Loop
             #ax.set_xticks([i,i+1,i+2,i+3,])
 
             # show the plot
-            #plt.show()
             fig_agg.draw()
-            print(decoded_bytes)
+            # print(decoded_bytes)
             event, values = window.Read(timeout=10)
             if event == 'Read':
                 openPort.close()  # close opened port
@@ -108,29 +107,5 @@ while True:  # Event Loop
     if values:
         # change the "output" element to be the value of "input" element  
         print(event, values)
-
-    #arr2 = np.append(arr2, np.array(a))
-    #i = i+1
-    #if i > 200:
-    #    #    i = 0
-    #    arr2 = arr2[-200:]
-    #a=a+1
-#
-    ## plot all data
-    #ax.clear()
-    #ax.plot(arr2, arr2, color='r')
-    ##ax.set_xticks([i,i+1,i+2,i+3,])
-#
-    ## show the plot
-    ##plt.show()
-    #fig_agg.draw()
-    
-
-    
-    #plt.pause(0.0001) # <-- sets the current plot until refreshed
-
-    # be nice to the cpu :)
-    #time.sleep(.1)
-
 
 window.Close()
